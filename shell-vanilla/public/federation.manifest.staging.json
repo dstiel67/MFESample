@@ -1,0 +1,4 @@
+{
+  "mfe1": "https://staging-mfe1.example.com/remoteEntry.json",
+  "_comment": "Staging environment - replace example.com with your staging domain"
+}

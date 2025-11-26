@@ -1,0 +1,4 @@
+{
+  "mfe1": "https://mfe1.example.com/remoteEntry.json",
+  "_comment": "Production environment - replace example.com with your production domain"
+}

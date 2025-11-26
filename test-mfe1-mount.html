@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test MFE1 Mount Function</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    #test-container {
+      border: 2px solid #ccc;
+      padding: 20px;
+      margin: 20px 0;
+      min-height: 200px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>MFE1 Mount Function Test</h1>
+  
+  <div>
+    <button onclick="testMount()">Mount MFE1</button>
+    <button onclick="testUnmount()">Unmount MFE1</button>
+  </div>
+  
+  <div id="status"></div>
+  
+  <div id="test-container"></div>
+  
+  <script type="module">
+    let unmountFn = null;
+    
+    window.testMount = async function() {
+      const status = document.getElementById('status');
+      const container = document.getElementById('test-container');
+      
+      try {
+        status.innerHTML = '<p>Loading MFE1...</p>';
+        
+        // Import the bootstrap module from MFE1
+        const bootstrap = await import('http://localhost:4201/bootstrap.js');
+        
+        // Call the mount function
+        const result = await bootstrap.mount(container);
+        
+        // Store the unmount function
+        unmountFn = result.unmount;
+        
+        status.innerHTML = '<p class="success">✅ MFE1 mounted successfully!</p>';
+        
+      } catch (error) {
+        status.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+        console.error('Mount error:', error);
+      }
+    };
+    
+    window.testUnmount = function() {
+      const status = document.getElementById('status');
+      
+      if (!unmountFn) {
+        status.innerHTML = '<p class="error">❌ No MFE mounted</p>';
+        return;
+      }
+      
+      try {
+        unmountFn();
+        unmountFn = null;
+        status.innerHTML = '<p class="success">✅ MFE1 unmounted successfully!</p>';
+      } catch (error) {
+        status.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+        console.error('Unmount error:', error);
+      }
+    };
+  </script>
+</body>
+</html>

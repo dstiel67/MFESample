@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error Boundary Test</title>
+  <link rel="stylesheet" href="/src/styles.css">
+  <style>
+    body {
+      padding: 2rem;
+    }
+    .test-section {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-button {
+      padding: 0.5rem 1rem;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .test-button:hover {
+      background: #5568d3;
+    }
+    #test-container {
+      margin-top: 1rem;
+      min-height: 200px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Error Boundary Component Tests</h1>
+  
+  <div class="test-section">
+    <h2>Test 1: MFE Loading Error</h2>
+    <p>Simulates an MFE loading failure</p>
+    <button class="test-button" onclick="testMFEError()">Trigger MFE Error</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test 2: Generic Error</h2>
+    <p>Shows a generic error fallback</p>
+    <button class="test-button" onclick="testGenericError()">Trigger Generic Error</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test 3: Error Notification</h2>
+    <p>Shows a toast notification</p>
+    <button class="test-button" onclick="testNotification()">Show Notification</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test 4: Clear Errors</h2>
+    <p>Clear all error displays</p>
+    <button class="test-button" onclick="clearErrors()">Clear All</button>
+  </div>
+  
+  <div id="test-container"></div>
+  
+  <script type="module">
+    import { 
+      createMFEFallback, 
+      createGenericFallback, 
+      showErrorNotification,
+      setupGlobalErrorHandler
+    } from './src/error-boundary.js';
+    
+    // Setup global error handler
+    setupGlobalErrorHandler();
+    
+    // Make functions available globally for onclick handlers
+    window.testMFEError = function() {
+      const container = document.getElementById('test-container');
+      container.innerHTML = '';
+      
+      const error = new Error('Failed to import remote module "mfe1": Module not found');
+      error.stack = `Error: Failed to import remote module "mfe1": Module not found
+    at _importRemoteModule (mfe-loader.js:123)
+    at loadMFE (mfe-loader.js:45)
+    at renderMFE1 (main.js:78)`;
+      
+      const fallback = createMFEFallback(
+        'mfe1',
+        error,
+        () => {
+          alert('Retry clicked! In real app, this would reload the MFE.');
+          clearErrors();
+        },
+        () => {
+          alert('Go Home clicked! In real app, this would navigate to home.');
+          clearErrors();
+        }
+      );
+      
+      container.appendChild(fallback);
+    };
+    
+    window.testGenericError = function() {
+      const container = document.getElementById('test-container');
+      container.innerHTML = '';
+      
+      const error = new Error('Unexpected error in application');
+      error.stack = `Error: Unexpected error in application
+    at someFunction (app.js:456)
+    at anotherFunction (app.js:123)`;
+      
+      const fallback = createGenericFallback(error, 'Test Context');
+      container.appendChild(fallback);
+    };
+    
+    window.testNotification = function() {
+      showErrorNotification(
+        'Test Notification',
+        'This is a test error notification that will auto-dismiss in 5 seconds.'
+      );
+    };
+    
+    window.clearErrors = function() {
+      const container = document.getElementById('test-container');
+      container.innerHTML = '<p style="color: #666; font-style: italic;">Errors cleared. Click a button above to test error displays.</p>';
+      
+      // Remove any notifications
+      const notifications = document.querySelectorAll('.error-notification');
+      notifications.forEach(n => n.remove());
+    };
+    
+    // Initialize with message
+    clearErrors();
+  </script>
+</body>
+</html>
