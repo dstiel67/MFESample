@@ -1,15 +1,10 @@
 import { defineConfig } from 'vite';
-import federation from '@originjs/vite-plugin-federation';
 
 export default defineConfig({
   plugins: [
-    federation({
-      name: 'shell',
-      remotes: {
-        mfe1: 'http://localhost:4201/remoteEntry.json'
-      },
-      shared: []  // No shared dependencies needed
-    })
+    // Note: We're not using @originjs/vite-plugin-federation because
+    // Angular Native Federation uses a different format.
+    // Instead, we load Native Federation modules manually in mfe-loader.js
   ],
   server: {
     port: 4200,

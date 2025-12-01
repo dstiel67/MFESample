@@ -12,6 +12,29 @@ class MFELoader {
     this.loadedMFEs = new Map();
     // Track the currently active MFE
     this.currentMFE = null;
+    // Track if federation is initialized
+    this.federationInitialized = false;
+  }
+
+  /**
+   * Load the federation manifest
+   * @private
+   */
+  async _loadManifest() {
+    try {
+      const response = await fetch('/federation.manifest.json');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch manifest: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error loading manifest:', error);
+      // Return default manifest if file doesn't exist
+      console.warn('Using default federation manifest');
+      return {
+        'mfe1': 'http://localhost:4201/remoteEntry.json'
+      };
+    }
   }
 
   /**
@@ -38,8 +61,7 @@ class MFELoader {
         await this.unloadMFE(name);
       }
 
-      // Import the remote module using Module Federation
-      // The remote name must match the configuration in vite.config.js
+      // Import the remote module using Native Federation
       const remoteModule = await this._importRemoteModule(name);
 
       // Bootstrap the MFE
@@ -157,45 +179,99 @@ class MFELoader {
   }
 
   /**
-   * Import a remote module using Module Federation
+   * Load a remote MFE using iframe approach
    * @private
    * @param {string} name - The remote name
-   * @returns {Promise<Object>} The imported module
+   * @returns {Promise<Object>} A mock module object with iframe reference
    */
   async _importRemoteModule(name) {
     try {
-      // Dynamic import of the remote module
-      // The format is: remoteName/exposedModule
+      // Get the MFE URL configuration
+      const mfeUrls = {
+        'mfe1': 'http://localhost:4201'
+      };
       
-      // For MFE1, import the bootstrap module which exposes the mount function
-      if (name === 'mfe1') {
-        const module = await import('mfe1/bootstrap');
-        return module;
+      const mfeUrl = mfeUrls[name];
+      if (!mfeUrl) {
+        throw new Error(`Unknown MFE: ${name}`);
       }
       
-      // For other MFEs, try common patterns
-      let module;
-      try {
-        module = await import(`${name}/bootstrap`);
-      } catch (e) {
-        // Fallback: try importing routes
-        try {
-          module = await import(`${name}/routes`);
-        } catch (e2) {
-          // Fallback: try importing the module entry
-          try {
-            module = await import(`${name}/Module`);
-          } catch (e3) {
-            // Fallback: try importing default
-            module = await import(name);
-          }
-        }
-      }
-
-      return module;
+      console.log(`Loading MFE via iframe from: ${mfeUrl}`);
+      
+      // Return a mock module that will be used to create an iframe
+      return {
+        mount: (container) => this._mountIframe(container, mfeUrl, name),
+        isIframe: true
+      };
     } catch (error) {
       throw new Error(`Failed to import remote module "${name}": ${error.message}`);
     }
+  }
+
+  /**
+   * Mount an MFE in an iframe
+   * @private
+   * @param {HTMLElement} container - The container element
+   * @param {string} url - The MFE URL
+   * @param {string} name - The MFE name
+   * @returns {Object} Object with unmount function
+   */
+  _mountIframe(container, url, name) {
+    // Create iframe element
+    const iframe = document.createElement('iframe');
+    iframe.id = `mfe-iframe-${name}`;
+    iframe.src = url;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    iframe.style.minHeight = '600px';
+    
+    // Add loading indicator
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'iframe-loading';
+    loadingDiv.innerHTML = `
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        <p>Loading ${name}...</p>
+      </div>
+    `;
+    
+    container.appendChild(loadingDiv);
+    
+    // Handle iframe load
+    iframe.onload = () => {
+      console.log(`Iframe loaded for ${name}`);
+      loadingDiv.remove();
+    };
+    
+    iframe.onerror = () => {
+      console.error(`Failed to load iframe for ${name}`);
+      loadingDiv.innerHTML = `
+        <div class="mfe-error">
+          <h3>Failed to Load</h3>
+          <p>Could not load ${name} from ${url}</p>
+          <p>Make sure the MFE server is running.</p>
+        </div>
+      `;
+    };
+    
+    // Append iframe to container
+    container.appendChild(iframe);
+    
+    console.log(`Iframe mounted for ${name}`);
+    
+    // Return unmount function
+    return {
+      unmount: () => {
+        console.log(`Unmounting iframe for ${name}`);
+        if (iframe.parentNode) {
+          iframe.parentNode.removeChild(iframe);
+        }
+        if (loadingDiv.parentNode) {
+          loadingDiv.parentNode.removeChild(loadingDiv);
+        }
+      }
+    };
   }
 
   /**
@@ -207,7 +283,16 @@ class MFELoader {
    * @returns {Promise<Object>} The MFE instance with unmount method
    */
   async _bootstrapMFE(remoteModule, container, options) {
-    // Look for a mount function in the module
+    // Check if this is an iframe-based module
+    if (remoteModule.isIframe) {
+      const mountFn = remoteModule.mount;
+      if (typeof mountFn !== 'function') {
+        throw new Error('Iframe module does not have a mount function');
+      }
+      return mountFn(container, options);
+    }
+    
+    // Original Module Federation approach (kept for compatibility)
     const mountFn = remoteModule.mount || remoteModule.bootstrap || remoteModule.default?.mount;
 
     if (typeof mountFn !== 'function') {

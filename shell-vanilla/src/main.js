@@ -105,18 +105,13 @@ async function renderMFE1() {
   }
   
   try {
-    // Show loading state
+    // Clear the container - the mfeLoader will handle loading states
     const container = document.getElementById('mfe-container');
     if (container) {
-      container.innerHTML = `
-        <div class="loading">
-          <div class="loading-spinner"></div>
-          <p>Loading MFE1 Dashboard...</p>
-        </div>
-      `;
+      container.innerHTML = '';
     }
     
-    // Load the MFE - this will import the remote module and call its mount function
+    // Load the MFE - this will handle its own loading state
     // Error handling is done inside mfeLoader.loadMFE, which will display the error boundary
     await mfeLoader.loadMFE('mfe1', '#mfe-container');
     

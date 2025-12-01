@@ -645,3 +645,26 @@ button {
     box-shadow: none;
   }
 }
+
+/* Iframe container styles */
+#mfe-container {
+  width: 100%;
+  min-height: 600px;
+  position: relative;
+}
+
+.iframe-loading {
+  width: 100%;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Iframe responsive sizing */
+#mfe-container iframe {
+  display: block;
+  width: 100%;
+  min-height: 600px;
+  border: none;
+}

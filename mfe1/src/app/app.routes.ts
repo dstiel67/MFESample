@@ -3,7 +3,7 @@ import { Dashboard } from './features/dashboard/dashboard';
 
 export const routes: Routes = [
   {
-    path: '',
+    path: './src/app/features/dashboard/dashboard.ts',
     component: Dashboard
   }
 ];
