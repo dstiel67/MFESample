@@ -1,6 +1,8 @@
 # Vanilla JavaScript Shell
 
-A lightweight, framework-agnostic shell application that dynamically loads Angular microfrontends using Module Federation.
+A lightweight, framework-agnostic shell application that dynamically loads Angular microfrontends using an iframe-based approach.
+
+> **Note:** This implementation uses iframes instead of Module Federation due to incompatibility between vanilla JS and Angular Native Federation. See [TECHNICAL_CHALLENGES.md](./TECHNICAL_CHALLENGES.md) for details on why this approach was chosen.
 
 ## Setup
 
@@ -113,9 +115,9 @@ This shell is a lightweight, framework-agnostic host application that can dynami
 ### Technology Stack
 
 - **Vite**: Build tooling and dev server with HMR
-- **@originjs/vite-plugin-federation**: Module Federation for Vite
 - **Vanilla JavaScript (ES6+)**: No framework dependencies
 - **History API**: Client-side routing
+- **Iframes**: MFE loading and isolation
 - **CSS3**: Styling with responsive design
 - **Error Boundary**: Robust error handling and fallback UI
 
@@ -325,7 +327,8 @@ When hosting shell and microfrontends on different domains:
 
 ## Documentation
 
-- **[FEDERATION_CONFIG.md](./FEDERATION_CONFIG.md)** - Comprehensive Module Federation configuration guide
+- **[TECHNICAL_CHALLENGES.md](./TECHNICAL_CHALLENGES.md)** - Why we use iframes instead of Module Federation
+- **[IFRAME_APPROACH.md](./IFRAME_APPROACH.md)** - How the iframe-based MFE loading works
 - **[BUILD.md](./BUILD.md)** - Build configuration and deployment options
 - **[MFE_INTEGRATION.md](./MFE_INTEGRATION.md)** - MFE integration testing and development workflow
 - **[ERROR_BOUNDARY_TEST.md](./ERROR_BOUNDARY_TEST.md)** - Error boundary testing guide
